@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idle GitHub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Idle GitHub</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Commits:</span>
+                    <span id="commits">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Commits/sec:</span>
+                    <span id="commits-per-second">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="clicker-section">
+                <button id="click-button">Write Code</button>
+                <div class="click-power">Click Power: <span id="click-power">1</span></div>
+            </div>
+
+            <div class="upgrades-section">
+                <h2>Upgrades</h2>
+                <div class="upgrades-grid">
+                    <div class="upgrade" id="intern">
+                        <h3>Intern</h3>
+                        <p>+0.1 commits/sec</p>
+                        <p>Cost: <span class="cost">10</span> commits</p>
+                        <button class="buy-button">Hire</button>
+                    </div>
+                    <div class="upgrade" id="junior-dev">
+                        <h3>Junior Dev</h3>
+                        <p>+1 commit/sec</p>
+                        <p>Cost: <span class="cost">100</span> commits</p>
+                        <button class="buy-button">Hire</button>
+                    </div>
+                    <div class="upgrade" id="senior-dev">
+                        <h3>Senior Dev</h3>
+                        <p>+5 commits/sec</p>
+                        <p>Cost: <span class="cost">1000</span> commits</p>
+                        <button class="buy-button">Hire</button>
+                    </div>
+                    <div class="upgrade" id="ci-bot">
+                        <h3>CI Bot</h3>
+                        <p>+10 commits/sec</p>
+                        <p>Cost: <span class="cost">5000</span> commits</p>
+                        <button class="buy-button">Deploy</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
