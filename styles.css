@@ -99,6 +99,27 @@ h1 {
     color: #8b949e;
 }
 
+/* Add highlight animation for click power */
+@keyframes clickPowerHighlight {
+    0% {
+        color: var(--text-color);
+        transform: scale(1);
+    }
+    50% {
+        color: var(--accent-color);
+        transform: scale(1.2);
+    }
+    100% {
+        color: var(--text-color);
+        transform: scale(1);
+    }
+}
+
+.highlight {
+    animation: clickPowerHighlight 1s ease;
+    font-weight: bold;
+}
+
 .upgrades-section {
     background-color: var(--card-bg);
     padding: 2rem;
@@ -124,11 +145,27 @@ h1 {
     padding: 1.5rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, transform 0.1s;
+    cursor: pointer;
+    position: relative;
 }
 
 .upgrade:hover {
     border-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+.upgrade:active {
+    transform: translateY(0);
+}
+
+/* Make it obvious when you can't afford */
+.upgrade .cost {
+    transition: color 0.2s;
+}
+
+.upgrade button:disabled ~ .cost {
+    color: #ff7b72;
 }
 
 .upgrade h3 {
@@ -153,6 +190,8 @@ h1 {
     width: 100%;
     margin-top: 0.5rem;
     transition: all 0.2s;
+    position: relative;
+    z-index: 5; /* Higher z-index to ensure button gets clicks */
 }
 
 .buy-button:hover {
@@ -161,11 +200,340 @@ h1 {
     color: var(--accent-color);
 }
 
+/* Style for disabled buttons */
 .buy-button:disabled {
-    opacity: 0.5;
+    opacity: 0.7;
     cursor: not-allowed;
     background-color: var(--secondary-color);
     border-color: var(--border-color);
+}
+
+/* Locked upgrade styling */
+.upgrade.locked {
+    opacity: 0.7;
+}
+
+.upgrade.locked::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    z-index: 1;
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Enable clicking through the overlay */
+.upgrade.locked * {
+    position: relative;
+    z-index: 2;
+}
+
+.level-required {
+    color: #8b949e;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 320px;
+    pointer-events: none;
+}
+
+.notification {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    animation: slideIn 0.3s ease-out;
+    pointer-events: auto;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 100%;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+    position: relative;
+}
+
+.notification-message {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.notification-details {
+    font-size: 0.95rem;
+    color: #8b949e;
+    border-top: 1px solid rgba(48, 54, 61, 0.5);
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+.notification-details ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.notification-details li {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 24px;
+}
+
+.notification-details li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+}
+
+.notification-details li:last-child {
+    margin-bottom: 0;
+}
+
+.notification.level-up {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+}
+
+.notification.level-up .notification-details {
+    color: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notification.level-up .notification-details li:before {
+    content: "✓";
+}
+
+.notification.error {
+    background-color: #da3633;
+    color: white;
+    border: none;
+}
+
+.notification.error .notification-details {
+    color: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notification-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 2px 6px;
+    line-height: 1;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.upgrade-count {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.upgrade.locked .upgrade-count {
+    opacity: 0.7;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.settings-button {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.settings-button:hover {
+    background-color: var(--button-hover);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+}
+
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.settings-option {
+    margin-bottom: 1rem;
+}
+
+.settings-option h3 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.settings-option p {
+    color: #ff7b72;
+    margin-bottom: 1rem;
+}
+
+.danger-button {
+    background-color: #da3633;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.danger-button:hover {
+    background-color: #b62825;
+}
+
+/* Export button styling */
+.button {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.button::before {
+    content: "⬇️";
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.button:hover {
+    background-color: #2d3748;
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Add animation for export action */
+@keyframes downloadPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(31, 111, 235, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
+    }
+}
+
+.button.active {
+    animation: downloadPulse 1.5s;
 }
 
 @media (max-width: 768px) {
@@ -180,5 +548,210 @@ h1 {
     
     .upgrades-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.xp-container {
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin: 1rem auto;
+}
+
+.xp-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.xp-bar {
+    height: 100%;
+    background-color: var(--accent-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.xp-text {
+    text-align: center;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+/* Remove the centered level-up animation */
+/* .level-up {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--accent-color);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 6px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: levelUp 2s ease-out;
+    z-index: 1000;
+} */
+
+/* Keep the animation keyframes for reference but we won't use them */
+@keyframes levelUp {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+}
+
+/* Add styles for visually disabled buttons */
+.buy-button.visually-disabled {
+    opacity: 0.7;
+    background-color: var(--secondary-color);
+    border-color: var(--border-color);
+    cursor: pointer;
+}
+
+.buy-button.visually-disabled:hover {
+    background-color: var(--button-hover);
+    transform: translateY(-1px);
+}
+
+/* Style for cost that's too high */
+.cost-too-high {
+    color: #ff7b72 !important; /* GitHub's red color for errors */
+    font-weight: 500;
+}
+
+/* Style for level that's too low */
+.level-too-low {
+    color: #ff7b72 !important; /* GitHub's red color for errors */
+}
+
+/* Styles for active multipliers display */
+.active-multipliers {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.active-multiplier {
+    background-color: var(--card-bg);
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    width: 100%;
+    max-width: 250px;
+    position: relative;
+    animation: pulseEffect 2s infinite;
+}
+
+.multiplier-description {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+.multiplier-timer {
+    background-color: var(--border-color);
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+
+.multiplier-progress {
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.1s linear;
+}
+
+.multiplier-time-left {
+    font-size: 0.9rem;
+    color: #8b949e;
+    text-align: right;
+}
+
+/* Style for on-cooldown buttons */
+.on-cooldown {
+    background-color: #30363d !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    color: #8b949e !important;
+    border-color: var(--border-color) !important;
+}
+
+.cooldown {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Pulse animation for active multipliers */
+@keyframes pulseEffect {
+    0% {
+        box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(31, 111, 235, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
+    }
+}
+
+/* Style for boost notifications */
+.notification.boost {
+    background-color: #238636;
+    color: white;
+    border: none;
+}
+
+.notification.boost .notification-details {
+    color: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Empty state for active multipliers */
+.active-multipliers:empty::before {
+    content: "No active multipliers";
+    display: block;
+    color: #8b949e;
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+    width: 100%;
+}
+
+/* Section spacing */
+.upgrades-section h2 {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.upgrades-section h2:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* Responsive layout for upgrades */
+@media (max-width: 768px) {
+    .active-multiplier {
+        max-width: 100%;
     }
 } 
