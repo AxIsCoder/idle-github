@@ -1,5 +1,11 @@
 # Idle GitHub
 
+<div align="center">
+  <a href="https://github.com/axiscoder/idle-github">
+    <img src="https://img.shields.io/badge/View%20on%20GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="View on GitHub">
+  </a>
+</div>
+
 A browser-based incremental game that simulates the journey of a developer leveling up through GitHub contributions. The more you code, the more you grow!
 
 ## 🎮 Game Features
