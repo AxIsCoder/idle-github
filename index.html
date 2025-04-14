@@ -68,6 +68,34 @@
                 </div>
             </div>
 
+            <!-- Repositories Section -->
+            <div class="repositories-section">
+                <h2>Repositories</h2>
+                <p class="section-desc">Create repositories to earn more commits periodically</p>
+                <div class="repositories-container">
+                    <div class="repository-stats">
+                        <div class="repo-stat">
+                            <span class="stat-label">Repositories:</span>
+                            <span id="repos-count">0</span>
+                        </div>
+                        <div class="repo-stat">
+                            <span class="stat-label">Commits per repo:</span>
+                            <span id="commits-per-repo">10</span>
+                        </div>
+                        <div class="repo-stat">
+                            <span class="stat-label">Creation time:</span>
+                            <span id="repo-creation-time">30s</span>
+                        </div>
+                    </div>
+                    <div class="repo-progress-container">
+                        <div id="repo-progress-bars" class="repo-progress-bars">
+                            <!-- Progress bars will be added here dynamically -->
+                        </div>
+                        <button id="create-repo-button" class="create-repo-button">Create Repository</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="upgrades-section">
                 <h2>Upgrades</h2>
                 <div class="upgrades-grid">
@@ -162,6 +190,42 @@
                         <p class="level-required">Level 8 required</p>
                         <p class="cooldown">Cooldown: 5 minutes</p>
                         <button class="buy-button">Activate</button>
+                    </div>
+                </div>
+                
+                <h2>Repository Upgrades</h2>
+                <div class="upgrades-grid">
+                    <div class="upgrade" id="repo-speed">
+                        <h3>Faster Creation</h3>
+                        <p>-20% repo creation time</p>
+                        <p>Cost: <span class="cost">300</span> commits</p>
+                        <p class="level-required">Level 4 required</p>
+                        <p class="upgrade-count">Owned: <span class="count">0</span></p>
+                        <button class="buy-button">Optimize</button>
+                    </div>
+                    <div class="upgrade" id="repo-output">
+                        <h3>Better Repos</h3>
+                        <p>+50% commits per repo</p>
+                        <p>Cost: <span class="cost">800</span> commits</p>
+                        <p class="level-required">Level 5 required</p>
+                        <p class="upgrade-count">Owned: <span class="count">0</span></p>
+                        <button class="buy-button">Upgrade</button>
+                    </div>
+                    <div class="upgrade" id="repo-automation">
+                        <h3>Repo Automation</h3>
+                        <p>Auto-creates 1 repo every 2 minutes</p>
+                        <p>Cost: <span class="cost">2500</span> commits</p>
+                        <p class="level-required">Level 7 required</p>
+                        <p class="upgrade-count">Owned: <span class="count">0</span></p>
+                        <button class="buy-button">Install</button>
+                    </div>
+                    <div class="upgrade" id="repo-slots">
+                        <h3>Extra Repo Slots</h3>
+                        <p>+1 concurrent repo creation</p>
+                        <p>Cost: <span class="cost">5000</span> commits</p>
+                        <p class="level-required">Level 9 required</p>
+                        <p class="upgrade-count">Owned: <span class="count">0</span></p>
+                        <button class="buy-button">Expand</button>
                     </div>
                 </div>
                 

@@ -12,6 +12,20 @@ class Game {
         // Track active multipliers
         this.activeMultipliers = [];
         
+        // Repository System
+        this.repositories = [];
+        this.maxRepoSlots = 1;
+        this.baseRepoCreationTime = 30; // seconds
+        this.baseRepoOutput = 10; // commits per completed repo
+        this.repoUpgrades = {
+            repoSpeed: { count: 0, cost: 300, effect: 0.2, levelRequired: 4 }, // 20% faster creation time per upgrade
+            repoOutput: { count: 0, cost: 800, effect: 0.5, levelRequired: 5 }, // 50% more commits per repo
+            repoAutomation: { count: 0, cost: 2500, levelRequired: 7 }, // Auto creates repositories
+            repoSlots: { count: 0, cost: 5000, effect: 1, levelRequired: 9 } // +1 slot per upgrade
+        };
+        this.autoRepoTimer = null;
+        this.lastAutoRepoTime = Date.now();
+        
         this.upgrades = {
             intern: { count: 0, cost: 10, rate: 0.1, xpRate: 0.1, levelRequired: 1 },
             juniorDev: { count: 0, cost: 100, rate: 1, xpRate: 0.5, levelRequired: 3 },
@@ -119,6 +133,13 @@ class Game {
         this.xpDisplay = document.getElementById('xp');
         this.xpBar = document.getElementById('xp-bar');
         
+        // Repository elements
+        this.reposCountDisplay = document.getElementById('repos-count');
+        this.commitsPerRepoDisplay = document.getElementById('commits-per-repo');
+        this.repoCreationTimeDisplay = document.getElementById('repo-creation-time');
+        this.repoProgressBarsContainer = document.getElementById('repo-progress-bars');
+        this.createRepoButton = document.getElementById('create-repo-button');
+        
         // Initialize upgrade buttons
         this.upgradeButtons = {
             intern: document.querySelector('#intern .buy-button'),
@@ -145,12 +166,24 @@ class Game {
             }
         });
         
+        // Initialize repository upgrade buttons
+        this.repoUpgradeButtons = {};
+        Object.keys(this.repoUpgrades).forEach(upgrade => {
+            const button = document.querySelector(`#${upgrade.replace(/([A-Z])/g, '-$1').toLowerCase()} .buy-button`);
+            if (button) {
+                this.repoUpgradeButtons[upgrade] = button;
+            }
+        });
+        
         // Multipliers container
         this.multipliersContainer = document.getElementById('active-multipliers');
     }
 
     setupEventListeners() {
         this.clickButton.addEventListener('click', () => this.handleClick());
+        
+        // Setup repository button
+        this.createRepoButton.addEventListener('click', () => this.createRepository());
         
         // Setup upgrade button listeners - now all buttons are always clickable
         Object.keys(this.upgrades).forEach(upgrade => {
@@ -176,6 +209,16 @@ class Game {
             if (button) {
                 button.addEventListener('click', () => {
                     this.activateTempMultiplier(multiplier);
+                });
+            }
+        });
+        
+        // Setup repository upgrade button listeners
+        Object.keys(this.repoUpgradeButtons).forEach(upgrade => {
+            const button = this.repoUpgradeButtons[upgrade];
+            if (button) {
+                button.addEventListener('click', () => {
+                    this.buyRepoUpgrade(upgrade);
                 });
             }
         });
@@ -743,137 +786,167 @@ class Game {
 
     startGameLoop() {
         setInterval(() => {
-            // Update commits and XP
-            this.commits += this.commitsPerSecond / 10;
-            if (this.xpPerSecond > 0) {
-                this.addXP(this.xpPerSecond / 10);
-            }
+            // Calculate commits earned since last tick
+            const baseCommitsPerTick = this.commitsPerSecond / 10; // Per 100ms
             
-            // Update active multipliers timers
-            for (let i = this.activeMultipliers.length - 1; i >= 0; i--) {
-                const multiplier = this.activeMultipliers[i];
-                multiplier.timeLeft -= 0.1; // Reduce by 0.1 seconds
-                
-                if (multiplier.timeLeft <= 0) {
-                    // Remove expired multiplier
-                    this.activeMultipliers.splice(i, 1);
-                    this.showNotification(`${multiplier.description} effect has ended!`);
-                }
-            }
+            // Apply active multipliers
+            let totalMultiplier = 1;
+            this.activeMultipliers.forEach(m => {
+                totalMultiplier *= m.multiplier;
+            });
             
-            this.updateActiveMultipliersDisplay();
+            const commitsEarned = baseCommitsPerTick * totalMultiplier;
+            this.commits += commitsEarned;
+            
+            // Add XP
+            const xpEarned = this.xpPerSecond / 10; // Per 100ms
+            this.addXP(xpEarned);
+            
+            // Update repository progress
+            this.updateRepoProgress();
+            
+            // Update displays
             this.updateDisplay();
-            this.saveGame();
+            
+            // Update active multipliers
+            this.updateActiveMultipliersDisplay();
+            
+            // Save game every 30 seconds (every 300 ticks as the loop runs at 100ms)
+            if (Math.random() < 0.0033) { // Roughly once every 30 seconds
+                this.saveGame();
+            }
         }, 100);
     }
 
     saveGame() {
-        // Don't save if we're in the process of resetting
+        // Skip saving if we're resetting
         if (this.isResetting) {
-            console.log('Game is resetting, skipping save');
             return;
         }
         
-        try {
-            const gameState = {
-                commits: this.commits,
-                commitsPerSecond: this.commitsPerSecond,
-                xpPerSecond: this.xpPerSecond,
-                clickPower: this.clickPower,
-                clickMultiplier: this.clickMultiplier,
-                level: this.level,
-                xp: this.xp,
-                xpToNextLevel: this.xpToNextLevel,
-                upgrades: this.upgrades,
-                clickUpgrades: this.clickUpgrades,
-                tempMultipliers: this.tempMultipliers,
-                activeMultipliers: this.activeMultipliers
-            };
-            localStorage.setItem('idleGitHub', JSON.stringify(gameState));
-        } catch (error) {
-            console.error("Error saving game:", error);
-            this.showNotification("Error saving game", "error", "Storage quota might be exceeded or browser storage restricted");
+        // Don't save if storage not available
+        if (!this.checkStorageAvailability()) {
+            return;
         }
+        
+        const currentTime = new Date().getTime();
+        
+        const gameData = {
+            commits: this.commits,
+            level: this.level,
+            xp: this.xp,
+            xpToNextLevel: this.xpToNextLevel,
+            upgrades: this.upgrades,
+            clickUpgrades: this.clickUpgrades,
+            tempMultipliers: this.tempMultipliers,
+            // Save repositories state
+            repositories: this.repositories,
+            maxRepoSlots: this.maxRepoSlots,
+            baseRepoCreationTime: this.baseRepoCreationTime,
+            baseRepoOutput: this.baseRepoOutput,
+            repoUpgrades: this.repoUpgrades,
+            lastAutoRepoTime: this.lastAutoRepoTime,
+            // Save last update time
+            lastUpdate: currentTime
+        };
+        
+        localStorage.setItem('idleGitHubGame', JSON.stringify(gameData));
     }
 
     loadGame() {
-        try {
-            const savedGame = localStorage.getItem('idleGitHub');
-            if (savedGame) {
-                const gameState = JSON.parse(savedGame);
-                this.commits = Number(gameState.commits) || 0;
-                this.commitsPerSecond = Number(gameState.commitsPerSecond) || 0;
-                this.xpPerSecond = Number(gameState.xpPerSecond) || 0;
-                this.level = Number(gameState.level) || 1;
-                this.clickPower = Math.max(Number(gameState.clickPower) || 1, this.level);
-                this.clickMultiplier = Number(gameState.clickMultiplier) || 1;
-                this.xp = Number(gameState.xp) || 0;
-                this.xpToNextLevel = Number(gameState.xpToNextLevel) || 100;
+        // Don't load if storage not available
+        if (!this.checkStorageAvailability()) {
+            return;
+        }
+        
+        const savedData = localStorage.getItem('idleGitHubGame');
+        if (savedData) {
+            try {
+                const gameData = JSON.parse(savedData);
+                
+                // Load basic game states
+                this.commits = gameData.commits || 0;
+                this.level = gameData.level || 1;
+                this.xp = gameData.xp || 0;
+                this.xpToNextLevel = gameData.xpToNextLevel || 100;
                 
                 // Load upgrades
-                if (gameState.upgrades) {
-                    Object.keys(this.upgrades).forEach(key => {
-                        if (gameState.upgrades[key]) {
-                            const savedUpgrade = gameState.upgrades[key];
-                            this.upgrades[key] = {
-                                count: Number(savedUpgrade.count) || 0,
-                                cost: Number(savedUpgrade.cost) || this.upgrades[key].cost,
-                                rate: Number(savedUpgrade.rate) || this.upgrades[key].rate,
-                                xpRate: this.upgrades[key].xpRate,
-                                levelRequired: this.upgrades[key].levelRequired
-                            };
+                if (gameData.upgrades) {
+                    Object.keys(gameData.upgrades).forEach(upgrade => {
+                        if (this.upgrades[upgrade]) {
+                            this.upgrades[upgrade].count = gameData.upgrades[upgrade].count || 0;
+                            this.upgrades[upgrade].cost = gameData.upgrades[upgrade].cost || this.upgrades[upgrade].cost;
                         }
                     });
                 }
                 
                 // Load click upgrades
-                if (gameState.clickUpgrades) {
-                    Object.keys(this.clickUpgrades).forEach(key => {
-                        if (gameState.clickUpgrades[key]) {
-                            const savedUpgrade = gameState.clickUpgrades[key];
-                            this.clickUpgrades[key] = {
-                                count: Number(savedUpgrade.count) || 0,
-                                cost: Number(savedUpgrade.cost) || this.clickUpgrades[key].cost,
-                                multiplier: this.clickUpgrades[key].multiplier,
-                                description: this.clickUpgrades[key].description,
-                                levelRequired: this.clickUpgrades[key].levelRequired
-                            };
+                if (gameData.clickUpgrades) {
+                    Object.keys(gameData.clickUpgrades).forEach(upgrade => {
+                        if (this.clickUpgrades[upgrade]) {
+                            this.clickUpgrades[upgrade].count = gameData.clickUpgrades[upgrade].count || 0;
+                            this.clickUpgrades[upgrade].cost = gameData.clickUpgrades[upgrade].cost || this.clickUpgrades[upgrade].cost;
                         }
                     });
                 }
                 
-                // Load temp multipliers
-                if (gameState.tempMultipliers) {
-                    Object.keys(this.tempMultipliers).forEach(key => {
-                        if (gameState.tempMultipliers[key]) {
-                            const savedMultiplier = gameState.tempMultipliers[key];
-                            this.tempMultipliers[key] = {
-                                duration: this.tempMultipliers[key].duration,
-                                multiplier: this.tempMultipliers[key].multiplier,
-                                cost: Number(savedMultiplier.cost) || this.tempMultipliers[key].cost,
-                                description: this.tempMultipliers[key].description,
-                                levelRequired: this.tempMultipliers[key].levelRequired,
-                                onCooldown: Boolean(savedMultiplier.onCooldown) || false,
-                                cooldownTime: this.tempMultipliers[key].cooldownTime
-                            };
+                // Load temp multipliers cooldowns
+                if (gameData.tempMultipliers) {
+                    Object.keys(gameData.tempMultipliers).forEach(multiplier => {
+                        if (this.tempMultipliers[multiplier]) {
+                            this.tempMultipliers[multiplier].onCooldown = gameData.tempMultipliers[multiplier].onCooldown || false;
+                            this.tempMultipliers[multiplier].cooldownEnd = gameData.tempMultipliers[multiplier].cooldownEnd || 0;
                         }
                     });
                 }
                 
-                // Load active multipliers
-                if (gameState.activeMultipliers && Array.isArray(gameState.activeMultipliers)) {
-                    this.activeMultipliers = gameState.activeMultipliers;
-                } else {
-                    this.activeMultipliers = [];
+                // Load repository system data
+                if (gameData.repositories) {
+                    this.repositories = gameData.repositories || [];
+                    this.maxRepoSlots = gameData.maxRepoSlots || 1;
+                    this.baseRepoCreationTime = gameData.baseRepoCreationTime || 30;
+                    this.baseRepoOutput = gameData.baseRepoOutput || 10;
+                    
+                    // Load repository upgrades
+                    if (gameData.repoUpgrades) {
+                        Object.keys(gameData.repoUpgrades).forEach(upgrade => {
+                            if (this.repoUpgrades[upgrade]) {
+                                this.repoUpgrades[upgrade].count = gameData.repoUpgrades[upgrade].count || 0;
+                                this.repoUpgrades[upgrade].cost = gameData.repoUpgrades[upgrade].cost || this.repoUpgrades[upgrade].cost;
+                            }
+                        });
+                    }
+                    
+                    this.lastAutoRepoTime = gameData.lastAutoRepoTime || Date.now();
+                    
+                    // Setup auto repository if purchased
+                    if (this.repoUpgrades.repoAutomation.count > 0) {
+                        this.setupAutoRepository();
+                    }
+                    
+                    // Recreate repository progress bars
+                    this.repositories.forEach(repo => {
+                        this.createRepoProgressBar(repo);
+                    });
                 }
                 
-                // Recalculate derived values
-                this.recalculateXpPerSecond();
+                // Recalculate click multiplier
                 this.recalculateClickMultiplier();
+                
+                // Update all displays
+                this.updateRepoStats();
+                this.updateDisplay();
+                
+                // Calculate offline progress
+                if (gameData.lastUpdate) {
+                    const currentTime = new Date().getTime();
+                    const offlineTime = (currentTime - gameData.lastUpdate) / 1000; // seconds
+                    this.calculateOfflineProgress(offlineTime);
+                }
+                
+            } catch (e) {
+                console.error("Error loading saved game:", e);
             }
-        } catch (error) {
-            console.error("Error loading game:", error);
-            this.showNotification("Error loading game", "error", "Your save file may be corrupted");
         }
     }
 
@@ -893,66 +966,120 @@ class Game {
         }
     }
 
-    calculateOfflineProgress() {
+    calculateOfflineProgress(offlineTime) {
         const lastSaveTime = localStorage.getItem('lastSaveTime');
         if (lastSaveTime) {
             const currentTime = new Date().getTime();
-            const timeDiff = (currentTime - parseInt(lastSaveTime)) / 1000; // in seconds
+            const timeDiff = currentTime - parseInt(lastSaveTime);
             
-            if (timeDiff > 60) { // Only show for absences > 1 minute
-                const offlineCommits = Math.floor(this.commitsPerSecond * timeDiff);
-                const offlineXP = Math.floor(this.xpPerSecond * timeDiff);
+            // If less than 5 seconds, don't bother with offline calculation
+            if (timeDiff < 5000) return;
+            
+            // Calculate offline time in seconds (capped at 24 hours to prevent excessive gains)
+            const offlineSeconds = Math.min(timeDiff / 1000, 86400);
+            
+            // Calculate commits earned while offline
+            const baseCommits = this.commitsPerSecond * offlineSeconds;
+            
+            // Get any active multipliers at the time of closing
+            let totalMultiplier = 1;
+            
+            // Add the commits
+            const totalCommitsEarned = baseCommits * totalMultiplier;
+            this.commits += totalCommitsEarned;
+            
+            // Add XP earned while offline
+            const xpEarned = this.xpPerSecond * offlineSeconds;
+            this.addXP(xpEarned);
+            
+            // Process repositories that would have been completed while offline
+            const completedOfflineRepos = [];
+            
+            this.repositories.forEach(repo => {
+                if (repo.completed) return;
                 
-                if (offlineCommits > 0 || offlineXP > 0) {
-                    this.commits += offlineCommits;
-                    
-                    // Add offline XP
-                    if (offlineXP > 0) {
-                        // Use a simple addition to avoid excessive level ups
-                        this.xp += offlineXP;
+                const elapsedBeforeOffline = (repo.progress / 100) * repo.duration;
+                const totalElapsed = elapsedBeforeOffline + (offlineSeconds * 1000);
+                
+                if (totalElapsed >= repo.duration) {
+                    repo.progress = 100;
+                    repo.completed = true;
+                    completedOfflineRepos.push(repo);
+                } else {
+                    repo.progress = (totalElapsed / repo.duration) * 100;
+                    // Update the visual progress
+                    const progressElement = document.querySelector(`.repo-progress[data-repo-id="${repo.id}"]`);
+                    if (progressElement) {
+                        const barElement = progressElement.querySelector('.repo-bar');
+                        barElement.style.width = `${repo.progress}%`;
                         
-                        // Check if player leveled up while away
-                        let levelsGained = 0;
-                        let tempXP = this.xp;
-                        let tempXPToNext = this.xpToNextLevel;
-                        
-                        while (tempXP >= tempXPToNext) {
-                            levelsGained++;
-                            tempXP -= tempXPToNext;
-                            tempXPToNext = Math.floor(tempXPToNext * 1.5);
-                        }
-                        
-                        // Apply level ups
-                        if (levelsGained > 0) {
-                            for (let i = 0; i < levelsGained; i++) {
-                                this.levelUp(true); // Silent level up (no notification)
-                            }
-                        } else {
-                            // Just update XP
-                            this.xp = tempXP;
-                        }
+                        const timeElement = progressElement.querySelector('.repo-time');
+                        const remainingTime = Math.max(0, Math.ceil((repo.duration - totalElapsed) / 1000));
+                        timeElement.textContent = `${remainingTime}s`;
                     }
-                    
-                    this.saveGame();
-                    
-                    // Format time away nicely
-                    let timeAway = '';
-                    if (timeDiff > 3600) {
-                        timeAway = `${Math.floor(timeDiff / 3600)} hours`;
-                    } else {
-                        timeAway = `${Math.floor(timeDiff / 60)} minutes`;
-                    }
-                    
-                    // Show notification with both commit and XP gains
-                    let message = `You earned ${offlineCommits.toLocaleString()} commits`;
-                    if (offlineXP > 0) {
-                        message += ` and ${offlineXP.toLocaleString()} XP`;
-                    }
-                    message += ` while away for ${timeAway}.`;
-                    
-                    this.showNotification("Welcome Back!", "default", message);
                 }
+            });
+            
+            // Process repositories that would have been created by automation
+            if (this.repoUpgrades.repoAutomation.count > 0) {
+                const autoInterval = 2 * 60; // 2 minutes in seconds
+                const timeSinceLastAuto = offlineSeconds + (Date.now() - this.lastAutoRepoTime) / 1000;
+                const autoRepoPotential = Math.floor(timeSinceLastAuto / autoInterval);
+                
+                // If we had auto repos that could have been created, generate them retrospectively
+                // But limit based on slots available
+                const autoReposToCreate = Math.min(autoRepoPotential, this.maxRepoSlots - this.repositories.length);
+                
+                for (let i = 0; i < autoReposToCreate; i++) {
+                    const repoId = Date.now() + i; // Generate unique ID
+                    const repoName = this.generateRepoName();
+                    const creationTime = this.getRepoCreationTime();
+                    
+                    // Calculate how far along this repo would be
+                    const remainingAutoTime = timeSinceLastAuto - (autoInterval * (i + 1));
+                    const progressPercent = Math.min(100, (remainingAutoTime / creationTime) * 100);
+                    
+                    const newRepo = {
+                        id: repoId,
+                        name: repoName,
+                        startTime: Date.now() - (remainingAutoTime * 1000),
+                        duration: creationTime * 1000,
+                        progress: progressPercent,
+                        completed: progressPercent >= 100
+                    };
+                    
+                    if (newRepo.completed) {
+                        completedOfflineRepos.push(newRepo);
+                    } else {
+                        this.repositories.push(newRepo);
+                        this.createRepoProgressBar(newRepo);
+                    }
+                }
+                
+                // Update last auto repo time
+                this.lastAutoRepoTime = Date.now() - (timeSinceLastAuto % autoInterval) * 1000;
             }
+            
+            // Process completed repos
+            if (completedOfflineRepos.length > 0) {
+                this.processCompletedRepositories(completedOfflineRepos);
+            }
+            
+            // Update button state
+            this.createRepoButton.disabled = this.repositories.length >= this.maxRepoSlots;
+            
+            // Show notification about offline progress
+            const message = `Welcome back! You earned while away:`;
+            const details = [
+                `+${Math.floor(totalCommitsEarned)} commits`,
+                `+${Math.floor(xpEarned)} XP`
+            ];
+            
+            if (completedOfflineRepos.length > 0) {
+                details.push(`+${completedOfflineRepos.length} repositories completed`);
+            }
+            
+            this.showNotification(message, 'default', details);
         }
         
         // Update last save time
@@ -984,6 +1111,263 @@ class Game {
             const upgrade = this.upgrades[key];
             this.xpPerSecond += upgrade.count * upgrade.xpRate;
         });
+    }
+
+    // Get actual repo creation time with upgrades
+    getRepoCreationTime() {
+        let time = this.baseRepoCreationTime;
+        const speedReduction = this.repoUpgrades.repoSpeed.count * this.repoUpgrades.repoSpeed.effect;
+        // Cap reduction at 80% to avoid instant repos
+        const maxReduction = 0.8;
+        const reduction = Math.min(speedReduction, maxReduction);
+        return time * (1 - reduction);
+    }
+    
+    // Get actual repo output with upgrades
+    getRepoOutput() {
+        let output = this.baseRepoOutput;
+        const outputIncrease = this.repoUpgrades.repoOutput.count * this.repoUpgrades.repoOutput.effect;
+        return Math.floor(output * (1 + outputIncrease));
+    }
+    
+    // Create a new repository
+    createRepository() {
+        // Check if we have free slots
+        if (this.repositories.length >= this.maxRepoSlots) {
+            this.showNotification('No free repository slots available!', 'error');
+            return;
+        }
+        
+        const repoId = Date.now(); // Unique ID for this repo
+        const repoName = this.generateRepoName();
+        const creationTime = this.getRepoCreationTime();
+        
+        // Create new repository
+        const newRepo = {
+            id: repoId,
+            name: repoName,
+            startTime: Date.now(),
+            duration: creationTime * 1000, // Convert to milliseconds
+            progress: 0,
+            completed: false
+        };
+        
+        this.repositories.push(newRepo);
+        this.createRepoProgressBar(newRepo);
+        this.updateRepoStats();
+        
+        // Disable button if no more slots
+        if (this.repositories.length >= this.maxRepoSlots) {
+            this.createRepoButton.disabled = true;
+        }
+    }
+    
+    // Generate a random repository name
+    generateRepoName() {
+        const prefixes = ['awesome', 'cool', 'super', 'mega', 'ultra', 'epic', 'fancy'];
+        const topics = ['app', 'tool', 'lib', 'api', 'ui', 'framework', 'project', 'kit'];
+        const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+        return `${randomPrefix}-${randomTopic}`;
+    }
+    
+    // Create visual progress bar for a repository
+    createRepoProgressBar(repo) {
+        const progressElement = document.createElement('div');
+        progressElement.className = 'repo-progress';
+        progressElement.dataset.repoId = repo.id;
+        
+        const nameElement = document.createElement('div');
+        nameElement.className = 'repo-name';
+        nameElement.textContent = repo.name;
+        
+        const barContainerElement = document.createElement('div');
+        barContainerElement.className = 'repo-bar-container';
+        
+        const barElement = document.createElement('div');
+        barElement.className = 'repo-bar';
+        barElement.style.width = '0%';
+        
+        const timeElement = document.createElement('div');
+        timeElement.className = 'repo-time';
+        const seconds = Math.ceil(repo.duration / 1000);
+        timeElement.textContent = `${seconds}s`;
+        
+        barContainerElement.appendChild(barElement);
+        progressElement.appendChild(nameElement);
+        progressElement.appendChild(barContainerElement);
+        progressElement.appendChild(timeElement);
+        
+        this.repoProgressBarsContainer.appendChild(progressElement);
+    }
+    
+    // Update progress bars for all repositories
+    updateRepoProgress() {
+        const currentTime = Date.now();
+        let completedRepos = [];
+        
+        // Update each repository
+        this.repositories.forEach(repo => {
+            if (repo.completed) return;
+            
+            const elapsed = currentTime - repo.startTime;
+            const progressPercent = Math.min(100, (elapsed / repo.duration) * 100);
+            repo.progress = progressPercent;
+            
+            // Find the progress bar
+            const progressElement = document.querySelector(`.repo-progress[data-repo-id="${repo.id}"]`);
+            if (progressElement) {
+                const barElement = progressElement.querySelector('.repo-bar');
+                barElement.style.width = `${progressPercent}%`;
+                
+                const timeElement = progressElement.querySelector('.repo-time');
+                const remainingTime = Math.max(0, Math.ceil((repo.duration - elapsed) / 1000));
+                timeElement.textContent = `${remainingTime}s`;
+            }
+            
+            // Check if completed
+            if (progressPercent >= 100) {
+                repo.completed = true;
+                completedRepos.push(repo);
+            }
+        });
+        
+        // Handle completed repositories
+        if (completedRepos.length > 0) {
+            this.processCompletedRepositories(completedRepos);
+        }
+    }
+    
+    // Process completed repositories
+    processCompletedRepositories(completedRepos) {
+        let totalCommits = 0;
+        let repoNames = [];
+        
+        completedRepos.forEach(repo => {
+            const output = this.getRepoOutput();
+            totalCommits += output;
+            repoNames.push(repo.name);
+            
+            // Remove visual element
+            const progressElement = document.querySelector(`.repo-progress[data-repo-id="${repo.id}"]`);
+            if (progressElement) {
+                progressElement.remove();
+            }
+        });
+        
+        // Add commits
+        this.commits += totalCommits;
+        
+        // Remove from repositories array
+        this.repositories = this.repositories.filter(repo => !completedRepos.includes(repo));
+        
+        // Enable create button if slots available
+        if (this.repositories.length < this.maxRepoSlots) {
+            this.createRepoButton.disabled = false;
+        }
+        
+        // Show notification
+        if (repoNames.length > 0) {
+            const notification = `Repository ${repoNames.join(', ')} completed!`;
+            const details = [`+${totalCommits} commits`];
+            this.showNotification(notification, 'default', details);
+        }
+        
+        this.updateRepoStats();
+        this.updateDisplay();
+    }
+    
+    // Update repository statistics
+    updateRepoStats() {
+        const completedRepos = this.repositories.filter(repo => repo.completed).length;
+        const totalRepos = this.repositories.length;
+        
+        if (this.reposCountDisplay) {
+            this.reposCountDisplay.textContent = totalRepos;
+        }
+        
+        if (this.commitsPerRepoDisplay) {
+            this.commitsPerRepoDisplay.textContent = this.getRepoOutput();
+        }
+        
+        if (this.repoCreationTimeDisplay) {
+            this.repoCreationTimeDisplay.textContent = `${this.getRepoCreationTime()}s`;
+        }
+    }
+    
+    // Buy repository upgrade
+    buyRepoUpgrade(upgrade) {
+        const upgradeInfo = this.repoUpgrades[upgrade];
+        
+        // Check if player has enough commits
+        if (this.commits < upgradeInfo.cost) {
+            this.showNotification(`Not enough commits for ${upgrade}!`, 'error');
+            return;
+        }
+        
+        // Check if player meets level requirement
+        if (this.level < upgradeInfo.levelRequired) {
+            this.showNotification(`Level ${upgradeInfo.levelRequired} required for ${upgrade}!`, 'error');
+            return;
+        }
+        
+        // Purchase the upgrade
+        this.commits -= upgradeInfo.cost;
+        upgradeInfo.count++;
+        upgradeInfo.cost = Math.floor(upgradeInfo.cost * 1.5); // Increase cost
+        
+        // Update display costs
+        const upgradeCostElement = document.querySelector(`#${upgrade.replace(/([A-Z])/g, '-$1').toLowerCase()} .cost`);
+        if (upgradeCostElement) {
+            upgradeCostElement.textContent = upgradeInfo.cost;
+        }
+        
+        // Update upgrade count
+        const upgradeCountElement = document.querySelector(`#${upgrade.replace(/([A-Z])/g, '-$1').toLowerCase()} .count`);
+        if (upgradeCountElement) {
+            upgradeCountElement.textContent = upgradeInfo.count;
+        }
+        
+        // Special handling for different upgrades
+        if (upgrade === 'repoSlots') {
+            this.maxRepoSlots += upgradeInfo.effect;
+            // Enable button if slots available
+            if (this.repositories.length < this.maxRepoSlots) {
+                this.createRepoButton.disabled = false;
+            }
+        } else if (upgrade === 'repoAutomation') {
+            // Start auto repository timer if first purchase
+            if (upgradeInfo.count === 1) {
+                this.setupAutoRepository();
+            }
+        }
+        
+        this.updateRepoStats();
+        this.updateDisplay();
+        
+        // Show notification
+        const notification = `Purchased ${upgrade.replace(/([A-Z])/g, ' $1').toLowerCase()} upgrade!`;
+        this.showNotification(notification);
+    }
+    
+    // Setup auto repository creation
+    setupAutoRepository() {
+        if (this.repoUpgrades.repoAutomation.count > 0) {
+            const interval = 2 * 60 * 1000; // 2 minutes in milliseconds
+            this.lastAutoRepoTime = Date.now();
+            
+            // Clear existing timer if any
+            if (this.autoRepoTimer) {
+                clearInterval(this.autoRepoTimer);
+            }
+            
+            // Set up interval to create repositories automatically
+            this.autoRepoTimer = setInterval(() => {
+                if (this.repositories.length < this.maxRepoSlots) {
+                    this.createRepository();
+                }
+            }, interval);
+        }
     }
 }
 
