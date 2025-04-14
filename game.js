@@ -1054,12 +1054,14 @@ class Game {
             const totalCommitsEarned = baseCommits * totalMultiplier;
             this.commits += totalCommitsEarned;
             
-            // Add XP earned while offline
+            // Add XP earned while offline from passive gains
             const xpEarned = this.xpPerSecond * offlineSeconds;
             this.addXP(xpEarned);
             
             // Process repositories that would have been completed while offline
             const completedOfflineRepos = [];
+            let completedRepoCommits = 0;
+            let completedRepoXP = 0;
             
             this.repositories.forEach(repo => {
                 if (repo.completed) return;
@@ -1071,6 +1073,10 @@ class Game {
                     repo.progress = 100;
                     repo.completed = true;
                     completedOfflineRepos.push(repo);
+                    
+                    // Add rewards to the offline totals
+                    completedRepoCommits += this.getRepoOutput();
+                    completedRepoXP += this.getRepoXPOutput();
                 } else {
                     repo.progress = (totalElapsed / repo.duration) * 100;
                     // Update the visual progress
@@ -1128,7 +1134,21 @@ class Game {
             
             // Process completed repos
             if (completedOfflineRepos.length > 0) {
-                this.processCompletedRepositories(completedOfflineRepos);
+                // No need to call processCompletedRepositories because we already calculated the rewards
+                // Just update the repositories array and visual elements
+                completedOfflineRepos.forEach(repo => {
+                    const progressElement = document.querySelector(`.repo-progress[data-repo-id="${repo.id}"]`);
+                    if (progressElement) {
+                        progressElement.remove();
+                    }
+                });
+                
+                // Add the repo rewards directly
+                this.commits += completedRepoCommits;
+                this.addXP(completedRepoXP);
+                
+                // Remove completed repos from the array
+                this.repositories = this.repositories.filter(repo => !completedOfflineRepos.includes(repo));
             }
             
             // Update button state
@@ -1137,8 +1157,8 @@ class Game {
             // Show notification about offline progress
             const message = `Welcome back! You earned while away:`;
             const details = [
-                `+${Math.floor(totalCommitsEarned)} commits`,
-                `+${Math.floor(xpEarned)} XP`
+                `+${Math.floor(totalCommitsEarned + completedRepoCommits)} commits`,
+                `+${Math.floor(xpEarned + completedRepoXP)} XP`
             ];
             
             if (completedOfflineRepos.length > 0) {
@@ -1146,6 +1166,9 @@ class Game {
             }
             
             this.showNotification(message, 'default', details);
+            
+            // Update repository stats
+            this.updateRepoStats();
         }
         
         // Update last save time
@@ -1194,6 +1217,13 @@ class Game {
         let output = this.baseRepoOutput;
         const outputIncrease = this.repoUpgrades.repoOutput.count * this.repoUpgrades.repoOutput.effect;
         return Math.floor(output * (1 + outputIncrease));
+    }
+    
+    // Get XP output for repos
+    getRepoXPOutput() {
+        // Base XP is half of the commit output
+        const baseOutput = this.getRepoOutput() * 0.5;
+        return Math.max(1, Math.floor(baseOutput));
     }
     
     // Create a new repository
@@ -1307,11 +1337,15 @@ class Game {
     // Process completed repositories
     processCompletedRepositories(completedRepos) {
         let totalCommits = 0;
+        let totalXP = 0;
         let repoNames = [];
         
         completedRepos.forEach(repo => {
-            const output = this.getRepoOutput();
-            totalCommits += output;
+            const commitOutput = this.getRepoOutput();
+            const xpOutput = this.getRepoXPOutput();
+            
+            totalCommits += commitOutput;
+            totalXP += xpOutput;
             repoNames.push(repo.name);
             
             // Remove visual element
@@ -1324,6 +1358,9 @@ class Game {
         // Add commits
         this.commits += totalCommits;
         
+        // Add XP
+        this.addXP(totalXP);
+        
         // Remove from repositories array
         this.repositories = this.repositories.filter(repo => !completedRepos.includes(repo));
         
@@ -1335,7 +1372,10 @@ class Game {
         // Show notification
         if (repoNames.length > 0) {
             const notification = `Repository ${repoNames.join(', ')} completed!`;
-            const details = [`+${totalCommits} commits`];
+            const details = [
+                `+${totalCommits} commits`,
+                `+${totalXP} XP`
+            ];
             this.showNotification(notification, 'default', details);
         }
         
@@ -1354,6 +1394,11 @@ class Game {
         
         if (this.commitsPerRepoDisplay) {
             this.commitsPerRepoDisplay.textContent = this.getRepoOutput();
+        }
+        
+        const xpPerRepoDisplay = document.getElementById('xp-per-repo');
+        if (xpPerRepoDisplay) {
+            xpPerRepoDisplay.textContent = this.getRepoXPOutput();
         }
         
         if (this.repoCreationTimeDisplay) {
