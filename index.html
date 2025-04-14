@@ -10,7 +10,9 @@
     <div class="game-container">
         <header>
             <div class="header-top">
-                <h1>Idle GitHub</h1>
+                <h1><svg class="title-logo" width="24" height="24" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                </svg> Idle GitHub</h1>
                 <div class="header-buttons">
                     <button id="settings-button" class="settings-button">⚙️ Settings</button>
                 </div>
@@ -61,7 +63,7 @@
 
         <main>
             <div class="clicker-section">
-                <button id="click-button">Write Code</button>
+                <button id="click-button">✏️ Write Code</button>
                 <div class="click-power">
                     <span class="stat-label">Commits per click:</span>
                     <span id="click-power" class="stat-value">1</span>
@@ -70,7 +72,7 @@
 
             <!-- Repositories Section -->
             <div class="repositories-section">
-                <h2>Repositories</h2>
+                <h2>📚 Repositories</h2>
                 <p class="section-desc">Create repositories to earn more commits periodically</p>
                 <div class="repositories-container">
                     <div class="repository-stats">
@@ -95,16 +97,16 @@
                         <div id="repo-progress-bars" class="repo-progress-bars">
                             <!-- Progress bars will be added here dynamically -->
                         </div>
-                        <button id="create-repo-button" class="create-repo-button">Create Repository</button>
+                        <button id="create-repo-button" class="create-repo-button">📂 Create Repository</button>
                     </div>
                 </div>
             </div>
 
             <div class="upgrades-section">
-                <h2>Upgrades</h2>
+                <h2>🔼 Upgrades</h2>
                 <div class="upgrades-grid">
                     <div class="upgrade" id="intern">
-                        <h3>Intern</h3>
+                        <h3>👨‍💻 Intern</h3>
                         <p>+0.1 commits/sec</p>
                         <p>+0.1 XP/sec</p>
                         <p>Cost: <span class="cost">10</span> commits</p>
@@ -113,7 +115,7 @@
                         <button class="buy-button">Hire</button>
                     </div>
                     <div class="upgrade" id="junior-dev">
-                        <h3>Junior Dev</h3>
+                        <h3>🧑‍💻 Junior Dev</h3>
                         <p>+1 commit/sec</p>
                         <p>+0.5 XP/sec</p>
                         <p>Cost: <span class="cost">100</span> commits</p>
@@ -122,7 +124,7 @@
                         <button class="buy-button">Hire</button>
                     </div>
                     <div class="upgrade" id="senior-dev">
-                        <h3>Senior Dev</h3>
+                        <h3>👨‍🔧 Senior Dev</h3>
                         <p>+5 commits/sec</p>
                         <p>+2 XP/sec</p>
                         <p>Cost: <span class="cost">1000</span> commits</p>
@@ -131,7 +133,7 @@
                         <button class="buy-button">Hire</button>
                     </div>
                     <div class="upgrade" id="ci-bot">
-                        <h3>CI Bot</h3>
+                        <h3>🤖 CI Bot</h3>
                         <p>+10 commits/sec</p>
                         <p>+5 XP/sec</p>
                         <p>Cost: <span class="cost">5000</span> commits</p>
@@ -141,10 +143,10 @@
                     </div>
                 </div>
                 
-                <h2>Click Power Upgrades</h2>
+                <h2>💪 Click Power Upgrades</h2>
                 <div class="upgrades-grid">
                     <div class="upgrade" id="betterIDE">
-                        <h3>Better IDE</h3>
+                        <h3>💻 Better IDE</h3>
                         <p>+20% click power</p>
                         <p>Cost: <span class="cost">50</span> commits</p>
                         <p class="level-required">Level 2 required</p>
@@ -152,7 +154,7 @@
                         <button class="buy-button">Purchase</button>
                     </div>
                     <div class="upgrade" id="coffeeBoost">
-                        <h3>Coffee Boost</h3>
+                        <h3>☕ Coffee Boost</h3>
                         <p>+50% click power</p>
                         <p>Cost: <span class="cost">500</span> commits</p>
                         <p class="level-required">Level 4 required</p>
@@ -160,7 +162,7 @@
                         <button class="buy-button">Purchase</button>
                     </div>
                     <div class="upgrade" id="ergonomicKeyboard">
-                        <h3>Ergonomic Keyboard</h3>
+                        <h3>⌨️ Ergonomic Keyboard</h3>
                         <p>+100% click power</p>
                         <p>Cost: <span class="cost">2000</span> commits</p>
                         <p class="level-required">Level 6 required</p>
@@ -169,10 +171,10 @@
                     </div>
                 </div>
                 
-                <h2>Temporary Boosts</h2>
+                <h2>⏱️ Temporary Boosts</h2>
                 <div class="upgrades-grid">
                     <div class="upgrade" id="hackathon">
-                        <h3>Hackathon Sprint</h3>
+                        <h3>🚀 Hackathon Sprint</h3>
                         <p>2x multiplier for 30s</p>
                         <p>Cost: <span class="cost">200</span> commits</p>
                         <p class="level-required">Level 3 required</p>
@@ -180,7 +182,7 @@
                         <button class="buy-button">Activate</button>
                     </div>
                     <div class="upgrade" id="codeReview">
-                        <h3>Code Review Session</h3>
+                        <h3>👁️ Code Review Session</h3>
                         <p>3x multiplier for 20s</p>
                         <p>Cost: <span class="cost">1000</span> commits</p>
                         <p class="level-required">Level 5 required</p>
@@ -188,7 +190,7 @@
                         <button class="buy-button">Activate</button>
                     </div>
                     <div class="upgrade" id="allNighter">
-                        <h3>Pull an All-Nighter</h3>
+                        <h3>🌙 Pull an All-Nighter</h3>
                         <p>5x multiplier for 60s</p>
                         <p>Cost: <span class="cost">5000</span> commits</p>
                         <p class="level-required">Level 8 required</p>
@@ -197,10 +199,10 @@
                     </div>
                 </div>
                 
-                <h2>Repository Upgrades</h2>
+                <h2>📚 Repository Upgrades</h2>
                 <div class="upgrades-grid">
                     <div class="upgrade" id="repo-speed">
-                        <h3>Faster Creation</h3>
+                        <h3>⚡ Faster Creation</h3>
                         <p>-20% repo creation time</p>
                         <p>Cost: <span class="cost">300</span> commits</p>
                         <p class="level-required">Level 4 required</p>
@@ -208,7 +210,7 @@
                         <button class="buy-button">Optimize</button>
                     </div>
                     <div class="upgrade" id="repo-output">
-                        <h3>Better Repos</h3>
+                        <h3>📈 Better Repos</h3>
                         <p>+50% commits per repo</p>
                         <p>+50% XP per repo</p>
                         <p>Cost: <span class="cost">800</span> commits</p>
@@ -217,7 +219,7 @@
                         <button class="buy-button">Upgrade</button>
                     </div>
                     <div class="upgrade" id="repo-automation">
-                        <h3>Repo Automation</h3>
+                        <h3>🔄 Repo Automation</h3>
                         <p>Auto-creates 1 repo every 2 minutes</p>
                         <p>Cost: <span class="cost">2500</span> commits</p>
                         <p class="level-required">Level 7 required</p>
@@ -225,7 +227,7 @@
                         <button class="buy-button">Install</button>
                     </div>
                     <div class="upgrade" id="repo-slots">
-                        <h3>Extra Repo Slots</h3>
+                        <h3>📁 Extra Repo Slots</h3>
                         <p>+1 concurrent repo creation</p>
                         <p>Cost: <span class="cost">5000</span> commits</p>
                         <p class="level-required">Level 9 required</p>
@@ -234,7 +236,7 @@
                     </div>
                 </div>
                 
-                <h2>Active Multipliers</h2>
+                <h2>✨ Active Multipliers</h2>
                 <div id="active-multipliers" class="active-multipliers">
                     <!-- Active multipliers will be dynamically added here -->
                 </div>

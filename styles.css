@@ -1,15 +1,15 @@
 :root {
-    --primary-color: #1f6feb;
+    --primary-color: #28a745;
     --secondary-color: #21262d;
     --background-color: #0d1117;
     --text-color: #c9d1d9;
     --border-color: #30363d;
     --card-bg: #161b22;
     --button-hover: #2c3338;
-    --button-active: #388bfd;
+    --button-active: #2ea44f;
     --stat-bg: #161b22;
-    --accent-color: #1f6feb;
-    --accent-hover: #388bfd;
+    --accent-color: #28a745;
+    --accent-hover: #2ea44f;
 }
 
 * {
@@ -42,6 +42,9 @@ h1 {
     color: var(--text-color);
     margin-bottom: 1rem;
     font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stats {
@@ -959,4 +962,10 @@ h1 {
         width: 100%;
         justify-content: center;
     }
+}
+
+.title-logo {
+    vertical-align: middle;
+    margin-right: 8px;
+    fill: var(--text-color);
 } 
