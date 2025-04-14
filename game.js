@@ -786,6 +786,66 @@ class Game {
             }
         });
         
+        // Update repository upgrades
+        Object.keys(this.repoUpgrades).forEach(upgrade => {
+            const button = this.repoUpgradeButtons[upgrade];
+            if (button) {
+                const upgradeInfo = this.repoUpgrades[upgrade];
+                const upgradeElement = document.querySelector(`#${upgrade.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+                
+                if (upgradeElement) {
+                    // Update button state based on level requirement and affordability
+                    const currentLevel = Number(this.level);
+                    const requiredLevel = Number(upgradeInfo.levelRequired);
+                    const canAfford = this.commits >= upgradeInfo.cost;
+                    const hasLevel = currentLevel >= requiredLevel;
+                    
+                    // Use visual class instead of disabling
+                    button.disabled = false;
+                    if (!canAfford || !hasLevel) {
+                        button.classList.add('visually-disabled');
+                    } else {
+                        button.classList.remove('visually-disabled');
+                    }
+                    
+                    // Update cost display
+                    const costElement = upgradeElement.querySelector('.cost');
+                    if (costElement) {
+                        costElement.textContent = Math.floor(upgradeInfo.cost).toLocaleString();
+                        if (!canAfford) {
+                            costElement.classList.add('cost-too-high');
+                        } else {
+                            costElement.classList.remove('cost-too-high');
+                        }
+                    }
+                    
+                    // Update upgrade count
+                    const countElement = upgradeElement.querySelector('.count');
+                    if (countElement) {
+                        countElement.textContent = upgradeInfo.count.toString();
+                    }
+                    
+                    // Update level requirement
+                    const levelReqElement = upgradeElement.querySelector('.level-required');
+                    if (levelReqElement) {
+                        levelReqElement.textContent = `Level ${requiredLevel} required`;
+                        if (!hasLevel) {
+                            levelReqElement.classList.add('level-too-low');
+                        } else {
+                            levelReqElement.classList.remove('level-too-low');
+                        }
+                    }
+                    
+                    // Update locked state
+                    if (!hasLevel) {
+                        upgradeElement.classList.add('locked');
+                    } else {
+                        upgradeElement.classList.remove('locked');
+                    }
+                }
+            }
+        });
+        
         // Update active multipliers display
         this.updateActiveMultipliersDisplay();
     }
