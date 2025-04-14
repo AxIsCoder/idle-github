@@ -28,7 +28,8 @@ body {
 .game-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2.5rem;
+    position: relative;
 }
 
 header {
@@ -40,11 +41,26 @@ header {
 
 h1 {
     color: var(--text-color);
-    margin-bottom: 1rem;
-    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 2.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.title-logo {
+    vertical-align: middle;
+    margin-right: 12px;
+    fill: var(--accent-color);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
+}
+
+h1:hover .title-logo {
+    transform: rotate(20deg);
 }
 
 .stats {
@@ -57,9 +73,17 @@ h1 {
 .stat {
     background-color: var(--stat-bg);
     padding: 1rem 2rem;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent-color);
 }
 
 .stat-label {
@@ -80,21 +104,27 @@ h1 {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    border-radius: 6px;
+    padding: 1.2rem 2.5rem;
+    font-size: 1.4rem;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s;
-    margin-bottom: 1rem;
-    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 1.2rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 #click-button:hover {
     background-color: var(--accent-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(40, 167, 69, 0.4);
 }
 
 #click-button:active {
     background-color: var(--accent-color);
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
 }
 
 .click-power {
@@ -145,21 +175,24 @@ h1 {
 
 .upgrade {
     background-color: var(--background-color);
-    padding: 1.5rem;
-    border-radius: 6px;
+    padding: 1.8rem;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
-    transition: border-color 0.2s, transform 0.1s;
+    transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .upgrade:hover {
     border-color: var(--accent-color);
-    transform: translateY(-2px);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .upgrade:active {
-    transform: translateY(0);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Make it obvious when you can't afford */
@@ -173,8 +206,9 @@ h1 {
 
 .upgrade h3 {
     color: var(--text-color);
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.4rem;
+    font-weight: 700;
 }
 
 .upgrade p {
@@ -187,20 +221,24 @@ h1 {
     background-color: var(--secondary-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
     cursor: pointer;
     width: 100%;
-    margin-top: 0.5rem;
-    transition: all 0.2s;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
     position: relative;
-    z-index: 5; /* Higher z-index to ensure button gets clicks */
+    z-index: 5;
+    font-size: 1.05rem;
+    font-weight: 500;
 }
 
 .buy-button:hover {
     background-color: var(--button-hover);
     border-color: var(--accent-color);
     color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Style for disabled buttons */
@@ -387,7 +425,9 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .header-buttons {
@@ -433,18 +473,22 @@ h1 {
 }
 
 .settings-button {
-    background-color: var(--secondary-color);
+    background-color: var(--card-bg);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .settings-button:hover {
     background-color: var(--button-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent-color);
 }
 
 .modal {
@@ -623,32 +667,61 @@ h1 {
 }
 
 .xp-container {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     width: 100%;
-    max-width: 400px;
-    margin: 1rem auto;
+    max-width: 500px;
+    margin: 1.5rem auto;
 }
 
 .xp-bar-container {
     width: 100%;
-    height: 8px;
-    background-color: var(--border-color);
-    border-radius: 4px;
+    height: 12px;
+    background-color: var(--background-color);
+    border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.7rem;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .xp-bar {
     height: 100%;
-    background-color: var(--accent-color);
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
     width: 0%;
-    transition: width 0.3s ease;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.xp-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 2s infinite;
+    transform: skewX(-20deg);
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
 }
 
 .xp-text {
     text-align: center;
     color: var(--text-color);
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Remove the centered level-up animation */
@@ -962,10 +1035,4 @@ h1 {
         width: 100%;
         justify-content: center;
     }
-}
-
-.title-logo {
-    vertical-align: middle;
-    margin-right: 8px;
-    fill: var(--text-color);
 } 
