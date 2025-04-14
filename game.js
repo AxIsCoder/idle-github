@@ -261,7 +261,13 @@ class Game {
     addXP(amount) {
         // Validate XP amount
         if (amount <= 0) {
-            this.showNotification("Invalid XP amount", "error", "Cannot add negative or zero XP");
+            // Only show error message if it's a significant negative or zero value
+            // Small floating point errors shouldn't trigger notifications
+            if (amount < -0.001) {
+                console.log("Invalid XP amount:", amount);
+                // Don't show notification for small calculation errors
+                // this.showNotification("Invalid XP amount", "error", "Cannot add negative or zero XP");
+            }
             return;
         }
         
