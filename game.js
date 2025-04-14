@@ -916,7 +916,13 @@ class Game {
             lastUpdate: currentTime
         };
         
-        localStorage.setItem('idleGitHubGame', JSON.stringify(gameData));
+        try {
+            localStorage.setItem('idleGitHubGame', JSON.stringify(gameData));
+            localStorage.setItem('lastSaveTime', currentTime.toString());
+            console.log("Game saved successfully");
+        } catch (error) {
+            console.error("Error saving game:", error);
+        }
     }
 
     loadGame() {
@@ -936,32 +942,54 @@ class Game {
                 this.xp = gameData.xp || 0;
                 this.xpToNextLevel = gameData.xpToNextLevel || 100;
                 
-                // Load upgrades
+                // Load upgrades (fixed to properly restore all properties)
                 if (gameData.upgrades) {
                     Object.keys(gameData.upgrades).forEach(upgrade => {
                         if (this.upgrades[upgrade]) {
-                            this.upgrades[upgrade].count = gameData.upgrades[upgrade].count || 0;
-                            this.upgrades[upgrade].cost = gameData.upgrades[upgrade].cost || this.upgrades[upgrade].cost;
+                            // Preserve the original properties and only update count and cost
+                            const originalUpgrade = this.upgrades[upgrade];
+                            const savedUpgrade = gameData.upgrades[upgrade];
+                            
+                            this.upgrades[upgrade] = {
+                                ...originalUpgrade,
+                                count: savedUpgrade.count || 0,
+                                cost: savedUpgrade.cost || originalUpgrade.cost
+                            };
                         }
                     });
                 }
                 
-                // Load click upgrades
+                // Load click upgrades (fixed to properly restore all properties)
                 if (gameData.clickUpgrades) {
                     Object.keys(gameData.clickUpgrades).forEach(upgrade => {
                         if (this.clickUpgrades[upgrade]) {
-                            this.clickUpgrades[upgrade].count = gameData.clickUpgrades[upgrade].count || 0;
-                            this.clickUpgrades[upgrade].cost = gameData.clickUpgrades[upgrade].cost || this.clickUpgrades[upgrade].cost;
+                            // Preserve the original properties and only update count and cost
+                            const originalUpgrade = this.clickUpgrades[upgrade];
+                            const savedUpgrade = gameData.clickUpgrades[upgrade];
+                            
+                            this.clickUpgrades[upgrade] = {
+                                ...originalUpgrade,
+                                count: savedUpgrade.count || 0,
+                                cost: savedUpgrade.cost || originalUpgrade.cost
+                            };
                         }
                     });
                 }
                 
-                // Load temp multipliers cooldowns
+                // Load temp multipliers (fixed to properly restore all properties)
                 if (gameData.tempMultipliers) {
                     Object.keys(gameData.tempMultipliers).forEach(multiplier => {
                         if (this.tempMultipliers[multiplier]) {
-                            this.tempMultipliers[multiplier].onCooldown = gameData.tempMultipliers[multiplier].onCooldown || false;
-                            this.tempMultipliers[multiplier].cooldownEnd = gameData.tempMultipliers[multiplier].cooldownEnd || 0;
+                            // Preserve the original properties and only update dynamic ones
+                            const originalMultiplier = this.tempMultipliers[multiplier];
+                            const savedMultiplier = gameData.tempMultipliers[multiplier];
+                            
+                            this.tempMultipliers[multiplier] = {
+                                ...originalMultiplier,
+                                cost: savedMultiplier.cost || originalMultiplier.cost,
+                                onCooldown: savedMultiplier.onCooldown || false,
+                                cooldownEnd: savedMultiplier.cooldownEnd || 0
+                            };
                         }
                     });
                 }
@@ -973,12 +1001,19 @@ class Game {
                     this.baseRepoCreationTime = gameData.baseRepoCreationTime || 30;
                     this.baseRepoOutput = gameData.baseRepoOutput || 10;
                     
-                    // Load repository upgrades
+                    // Load repository upgrades (fixed to properly restore all properties)
                     if (gameData.repoUpgrades) {
                         Object.keys(gameData.repoUpgrades).forEach(upgrade => {
                             if (this.repoUpgrades[upgrade]) {
-                                this.repoUpgrades[upgrade].count = gameData.repoUpgrades[upgrade].count || 0;
-                                this.repoUpgrades[upgrade].cost = gameData.repoUpgrades[upgrade].cost || this.repoUpgrades[upgrade].cost;
+                                // Preserve the original properties and only update count and cost
+                                const originalUpgrade = this.repoUpgrades[upgrade];
+                                const savedUpgrade = gameData.repoUpgrades[upgrade];
+                                
+                                this.repoUpgrades[upgrade] = {
+                                    ...originalUpgrade,
+                                    count: savedUpgrade.count || 0,
+                                    cost: savedUpgrade.cost || originalUpgrade.cost
+                                };
                             }
                         });
                     }
@@ -996,8 +1031,10 @@ class Game {
                     });
                 }
                 
-                // Recalculate click multiplier
+                // Recalculate derived values based on loaded upgrades
                 this.recalculateClickMultiplier();
+                this.recalculateCommitsPerSecond();
+                this.recalculateXpPerSecond();
                 
                 // Update all displays
                 this.updateRepoStats();
@@ -1010,6 +1047,7 @@ class Game {
                     this.calculateOfflineProgress(offlineTime);
                 }
                 
+                console.log("Game loaded successfully");
             } catch (e) {
                 console.error("Error loading saved game:", e);
             }
@@ -1479,6 +1517,19 @@ class Game {
                 }
             }, interval);
         }
+    }
+
+    // Helper method to recalculate commits per second
+    recalculateCommitsPerSecond() {
+        let commitsPerSecond = 0;
+        
+        // Add all passive income sources
+        Object.keys(this.upgrades).forEach(upgrade => {
+            const upgradeInfo = this.upgrades[upgrade];
+            commitsPerSecond += upgradeInfo.count * upgradeInfo.rate;
+        });
+        
+        this.commitsPerSecond = commitsPerSecond;
     }
 }
 
