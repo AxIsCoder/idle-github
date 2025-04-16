@@ -12,7 +12,7 @@ console.log('Reset Game Button:', resetGameButton);
 console.log('Export Button:', exportButton);
 
 // Check local storage on page load
-console.log('Current localStorage idleGitHub value:', localStorage.getItem('idleGitHub'));
+console.log('Current localStorage idleGitHubGame value:', localStorage.getItem('idleGitHubGame'));
 
 settingsButton.addEventListener('click', () => {
     settingsModal.classList.add('show');
@@ -37,9 +37,9 @@ resetGameButton.addEventListener('click', () => {
         // Dispatch a custom event that game.js can listen for
         window.dispatchEvent(new Event('game-reset'));
         
-        console.log('Removing localStorage idleGitHub...');
-        localStorage.removeItem('idleGitHub');
-        console.log('LocalStorage after removal:', localStorage.getItem('idleGitHub'));
+        console.log('Removing localStorage idleGitHubGame...');
+        localStorage.removeItem('idleGitHubGame');
+        console.log('LocalStorage after removal:', localStorage.getItem('idleGitHubGame'));
         console.log('Reloading page...');
         
         // Give a slight delay before reloading to ensure event is processed
@@ -52,7 +52,7 @@ resetGameButton.addEventListener('click', () => {
 // Export game data
 exportButton.addEventListener('click', () => {
     console.log('Export button clicked!');
-    const gameData = localStorage.getItem('idleGitHub');
+    const gameData = localStorage.getItem('idleGitHubGame');
     if (gameData) {
         // Add animation class
         exportButton.classList.add('active');
